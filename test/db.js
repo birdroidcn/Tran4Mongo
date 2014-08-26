@@ -1,72 +1,87 @@
 'use strict';
 var should = require('should'),
-	DB = require('../lib/db'),
+	WrapDb = require('../lib/db'),
 	Db = require('mongodb').Db,
 	Server = require('mongodb').Server,
 	db = new Db('test', new Server('localhost', 27017), {
 		w: 1
 	}),
-	instanceDb = null;
-
-describe('DB', function() {
-	before(function(done) {
-		db.open(function(err, db) {
-			if (err) done(err);
-			instanceDb = db;
-			done();
-		})
+	openedDb = null,
+	wrapDb = null;
+before(function(done) {
+	db.open(function(err, db) {
+		if (err) done(err);
+		openedDb = db;
+		db.collection('cats').insert([{
+			name: 'menger1',
+			number: 10
+		}, {
+			name: 'menger2',
+			number: 0
+		}], done);
 	});
-	describe('#beginTransaction()', function() {
-		it('should create transaction id', function(done) {
-			var db = new DB(instanceDb);
-			db.beginTransaction(function(err, db) {
-				(err === null).should.be.true;
-				db.transId.should.be.ok;
-				done();
+});
+describe('DB', function() {
+
+	beforeEach(function(done) {
+		wrapDb = new WrapDb(openedDb);
+		wrapDb.beginTransaction(function(err, db) {
+			if (err) throw err;
+			wrapDb = db;
+			wrapDb.collection('cats').update({
+				name: 'menger1'
+			}, {
+				$inc: {
+					number: -10
+				}
+			}, function(err, result) {
+				if (err) done(err);
+				wrapDb.collection('cats').update({
+					name: 'menger2'
+				}, {
+					$inc: {
+						number: 10
+					}
+				}, {
+					multi: false
+				}, done);
 			});
+		});
+
+	});
+
+	describe('#rollback()', function() {
+		it('should rollback successfully', function(done) {
+			wrapDb.rollback(function(err) {
+				if (err) done(err);
+				wrapDb.collection('cats').findOne({
+					name: 'menger1'
+				}, function(err, result) {
+					if (err) done(err);
+					result.number.should.equal(10);
+					done();
+				})
+			})
 		});
 	});
 
 	describe('#commit()', function() {
 		it('should commit successfully', function(done) {
-			var db = new DB(instanceDb);
-			db.beginTransaction(function(err, db) {
-				if (err) throw err;
-				db.collection('cats').update({
-					name: 'Zildjian99'
-				}, {
-					$inc: {
-						number: 20
-					}
-				}, {
-					multi: false
+			wrapDb.commit(function(err) {
+				if (err) done(err);
+				wrapDb.collection('cats').findOne({
+					name: 'menger'
 				}, function(err, result) {
-					if (err) throw err;
-					db.commit(done);
+					if (err) done(err);
+					wrapDb.collection('cats').findOne({
+						name: 'menger1'
+					}, function(err, result) {
+						if (err) done(err);
+						result.number.should.equal(0);
+						done();
+					})
 				});
 			});
 		});
 	});
-
-	describe('#rollback()', function() {
-		it('should rollback successfully', function(done) {
-			var db = new DB(instanceDb);
-			db.beginTransaction(function(err, db) {
-				if (err) throw err;
-				db.collection('cats').update({
-					name: 'Zildjian128'
-				}, {
-					$inc: {
-						number: 20
-					}
-				}, {
-					multi: false
-				}, function(err, result) {
-					if (err) throw err;
-					db.rollback(done);
-				});
-			});
-		});
-	});
-
 });
