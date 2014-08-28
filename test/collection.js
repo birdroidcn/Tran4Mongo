@@ -22,58 +22,71 @@ describe('Collection', function() {
         });
     });
 
-    describe('#update()', function() {
-        it('should update with multi false successfully', function(done) {
-            wrapDb.collection('cats').update({
-                    name: 'Zildjian556'
+    // describe('#update()', function() {
+    //     it('should update with multi false successfully', function(done) {
+    //         wrapDb.collection('cats').update({
+    //                 name: 'Zildjian556'
+    //             }, {
+    //                 $inc: {
+    //                     number: 20
+    //                 }
+    //             }, {
+    //                 multi: false
+    //             },
+    //             done);
+    //     });
+    //     it('should update with {multi:true} successfully', function(done) {
+    //         wrapDb.collection('cats').update({
+    //                 name: 'Zildjian557'
+    //             }, {
+    //                 $inc: {
+    //                     number: 20
+    //                 }
+    //             }, {
+    //                 multi: true
+    //             },
+    //             done);
+    //     });
+    // });
+
+    // describe('#insert()', function() {
+    //     it('should insert one document successfully with transaction label', function(done) {
+    //         wrapDb.collection('cats').insert({
+    //             name: 'Zildjian1e'
+    //         }, function(err, result) {
+    //             if (err) done(err);
+    //             result.forEach(function(dcmt) {
+    //                 dcmt.pendingTransaction.opt.should.equal('insert');
+    //             });
+    //             done();
+    //         });
+    //     });
+    //     it('should insert documents array successfully with transaction label', function(done) {
+    //         wrapDb.collection('cats').insert([{
+    //             name: 'Zildjian1c'
+    //         }, {
+    //             name: 'Zildjian1d'
+    //         }], function(err, result) {
+    //             if (err) done(err);
+    //             result.forEach(function(dcmt) {
+    //                 dcmt.pendingTransaction.opt.should.equal('insert');
+    //             });
+    //             done();
+    //         });
+    //     });
+    // });
+    describe('#remove()', function() {
+        it('should remove one document successfully with transaction label', function(done) {
+            wrapDb.collection('cats').remove({
+                    name: 'Zildjian82'
                 }, {
-                    $inc: {
-                        number: 20
-                    }
-                }, {
-                    multi: false
+                    single: true
                 },
-                done);
-        });
-        it('should update with {multi:true} successfully', function(done) {
-            wrapDb.collection('cats').update({
-                    name: 'Zildjian557'
-                }, {
-                    $inc: {
-                        number: 20
-                    }
-                }, {
-                    multi: true
-                },
-                done);
+                function(err, numberOfRemovedDocs) {
+                    if (err) done(err);
+                    numberOfRemovedDocs.should.equal(1);
+                    done();
+                });
         });
     });
-
-    describe('#insert()', function() {
-        it('should insert one document successfully with transaction label', function(done) {
-            wrapDb.collection('cats').insert({
-                name: 'Zildjian1e'
-            }, function(err, result) {
-                if (err) done(err);
-                result.forEach(function(dcmt) {
-                    dcmt.pendingTransaction.opt.should.equal('insert');
-                });
-                done();
-            });
-        });
-        it('should insert documents array successfully with transaction label', function(done) {
-            wrapDb.collection('cats').insert([{
-                name: 'Zildjian1c'
-            }, {
-                name: 'Zildjian1d'
-            }], function(err, result) {
-                if (err) done(err);
-                result.forEach(function(dcmt) {
-                    dcmt.pendingTransaction.opt.should.equal('insert');
-                });
-                done();
-            });
-        });
-    });
-
 });

@@ -34,6 +34,8 @@ describe('DB', function() {
 				$inc: {
 					number: -10
 				}
+			}, {
+				multi: false
 			}, function(err, result) {
 				if (err) done(err);
 				wrapDb.collection('cats').update({
@@ -44,7 +46,13 @@ describe('DB', function() {
 					}
 				}, {
 					multi: false
-				}, done);
+				}, function(err, result) {
+					if (err) done(err);
+					wrapDb.collection('dogs').insert({
+						name: 'bird',
+						number: '1'
+					}, done);
+				});
 			});
 		});
 
@@ -57,11 +65,17 @@ describe('DB', function() {
 				wrapDb.collection('cats').findOne({
 					name: 'menger1'
 				}, function(err, result) {
+
 					if (err) done(err);
 					result.number.should.equal(10);
-					done();
-				})
-			})
+					wrapDb.collection('dogs').findOne({
+						name: 'bird'
+					}, function(err, result) {
+						(result == null).should.be.ok;
+						done();
+					});
+				});
+			});
 		});
 	});
 
@@ -69,17 +83,18 @@ describe('DB', function() {
 		it('should commit successfully', function(done) {
 			wrapDb.commit(function(err) {
 				if (err) done(err);
+
 				wrapDb.collection('cats').findOne({
-					name: 'menger'
+					name: 'menger2'
 				}, function(err, result) {
 					if (err) done(err);
-					wrapDb.collection('cats').findOne({
-						name: 'menger1'
+					result.number.should.equal(10);
+					wrapDb.collection('dogs').findOne({
+						name: 'bird'
 					}, function(err, result) {
-						if (err) done(err);
-						result.number.should.equal(0);
+						result.should.have.properties('name', 'number');
 						done();
-					})
+					});
 				});
 			});
 		});
